@@ -2,36 +2,85 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Cart Quantity + Toast</title>
+  <title>Professional Cart Page</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      font-family: sans-serif;
-      padding: 50px;
-      background-color: #f4f4f4;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f8f9fa;
+      padding: 40px;
     }
 
-    .cart-box {
-      max-width: 300px;
-      padding: 20px;
-      background: white;
+    .cart-container {
+      max-width: 800px;
+      margin: auto;
+      background: #fff;
       border-radius: 10px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-      text-align: center;
+      padding: 20px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1);
     }
 
-    .buttons {
-      margin: 20px 0;
+    .cart-header {
+      font-size: 24px;
+      font-weight: bold;
+      margin-bottom: 20px;
     }
 
-    button {
-      padding: 10px 20px;
-      font-size: 20px;
-      margin: 0 10px;
-      cursor: pointer;
+    .cart-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px 0;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .item-info {
+      flex: 2;
+    }
+
+    .item-title {
+      font-weight: 600;
+      font-size: 18px;
+      margin-bottom: 5px;
+    }
+
+    .qty-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .qty-controls button {
+      padding: 6px 12px;
+      font-size: 18px;
       border: none;
-      background: #2b2b2b;
+      border-radius: 4px;
+      background-color: #343a40;
       color: white;
-      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .qty-controls span {
+      min-width: 30px;
+      text-align: center;
+      display: inline-block;
+      font-weight: bold;
+    }
+
+    .item-total {
+      flex: 1;
+      font-size: 16px;
+      text-align: right;
+      font-weight: 600;
+    }
+
+    .cart-summary {
+      margin-top: 20px;
+      text-align: right;
+      font-size: 20px;
+      font-weight: bold;
     }
 
     #toast-container {
@@ -42,7 +91,7 @@
     }
 
     .toast {
-      background-color: #2b2b2b;
+      background-color: #343a40;
       color: white;
       padding: 12px 20px;
       margin-top: 10px;
@@ -50,7 +99,7 @@
       box-shadow: 0 4px 10px rgba(0,0,0,0.3);
       opacity: 0;
       transform: translateX(100%);
-      animation: slideIn 0.5s forwards, fadeOut 0.5s ease-out forwards 2.5s;
+      animation: slideIn 0.5s forwards, fadeOut 0.5s ease-out forwards 3s;
       font-size: 16px;
     }
 
@@ -68,47 +117,95 @@
       }
     }
 
-    .total {
-      font-size: 20px;
-      margin-top: 10px;
+    @media (max-width: 600px) {
+      .cart-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+
+      .item-total {
+        text-align: left;
+      }
+
+      .qty-controls {
+        justify-content: flex-start;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="cart-box">
-    <h2>Item Name</h2>
-    <div class="buttons">
-      <button onclick="changeQty(-1)">−</button>
-      <span id="qty">1</span>
-      <button onclick="changeQty(1)">+</button>
+  <div class="cart-container">
+    <div class="cart-header">🛒 Your Cart</div>
+
+    <div class="cart-item" data-price="30">
+      <div class="item-info">
+        <div class="item-title">Product A</div>
+        <div class="qty-controls">
+          <button onclick="changeQty(this, -1)">−</button>
+          <span class="qty">1</span>
+          <button onclick="changeQty(this, 1)">+</button>
+        </div>
+      </div>
+      <div class="item-total">30 ৳</div>
     </div>
-    <div class="total">Total: <span id="total">30</span> ৳</div>
+
+    <div class="cart-item" data-price="50">
+      <div class="item-info">
+        <div class="item-title">Product B</div>
+        <div class="qty-controls">
+          <button onclick="changeQty(this, -1)">−</button>
+          <span class="qty">1</span>
+          <button onclick="changeQty(this, 1)">+</button>
+        </div>
+      </div>
+      <div class="item-total">50 ৳</div>
+    </div>
+
+    <div class="cart-summary">Total: <span id="grand-total">80</span> ৳</div>
   </div>
 
   <div id="toast-container"></div>
 
   <script>
-    const pricePerItem = 30;
-    let quantity = 1;
+    function changeQty(button, change) {
+      const item = button.closest(".cart-item");
+      const qtyElem = item.querySelector(".qty");
+      const totalElem = item.querySelector(".item-total");
+      const unitPrice = parseInt(item.getAttribute("data-price"));
 
-    function changeQty(change) {
-      if (quantity + change < 1) return;
+      let qty = parseInt(qtyElem.innerText);
 
-      quantity += change;
-      document.getElementById("qty").innerText = quantity;
-      document.getElementById("total").innerText = quantity * pricePerItem;
+      if (qty + change < 1) return;
 
-      if (change === 1) {
-        playSound('add');
-        showToast("🛒 1 item added. Total: " + quantity * pricePerItem + "৳");
-      } else {
-        playSound('remove');
-        showToast("❌ 1 item removed. Total: " + quantity * pricePerItem + "৳");
-      }
+      qty += change;
+      qtyElem.innerText = qty;
+      totalElem.innerText = (qty * unitPrice) + " ৳";
+
+      updateGrandTotal();
+
+      const type = change > 0 ? 'add' : 'remove';
+      const message = type === 'add' 
+        ? `🟢 Added 1 item. Subtotal: ${qty * unitPrice} ৳` 
+        : `🔴 Removed 1 item. Subtotal: ${qty * unitPrice} ৳`;
+
+      playSound(type);
+      showToast(message);
     }
 
-    function showToast(message, duration = 2500) {
+    function updateGrandTotal() {
+      const items = document.querySelectorAll(".cart-item");
+      let total = 0;
+      items.forEach(item => {
+        const qty = parseInt(item.querySelector(".qty").innerText);
+        const unitPrice = parseInt(item.getAttribute("data-price"));
+        total += qty * unitPrice;
+      });
+      document.getElementById("grand-total").innerText = total;
+    }
+
+    function showToast(message, duration = 3000) {
       const container = document.getElementById("toast-container");
       const toast = document.createElement("div");
       toast.className = "toast";
@@ -119,16 +216,16 @@
     }
 
     function playSound(type) {
-      let soundURL;
-      if (type === 'add') {
-        soundURL = "https://www.soundjay.com/buttons/sounds/button-3.mp3";
-      } else {
-        soundURL = "https://www.soundjay.com/buttons/sounds/button-10.mp3";
-      }
+      let soundURL = type === 'add'
+        ? "https://www.soundjay.com/buttons/sounds/button-3.mp3"
+        : "https://www.soundjay.com/buttons/sounds/button-10.mp3";
 
       const audio = new Audio(soundURL);
-      audio.play().catch((e) => console.warn("Sound blocked:", e));
+      audio.play().catch(() => {});
     }
+
+    // Initial total update on load
+    updateGrandTotal();
   </script>
 
 </body>
